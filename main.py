@@ -10,7 +10,8 @@ def process_frame(frame):
 def _main():
     model_dir = os.path.join('models', 'dummy-model')
     model = keras.models.load_model(model_dir)
-    src = cv2.VideoCapture(0)
+    #src = cv2.VideoCapture(0)
+    src = cv2.VideoCapture('http://192.168.1.139:8080/video')
     win_name = 'preview'
     cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
     while cv2.waitKey(1) != 27:
@@ -19,7 +20,9 @@ def _main():
             break
 
         pframe = process_frame(frame)
-        label = model.predict(np.expand_dims(pframe, axis=0)).argmax()
+        label = model.predict(np.expand_dims(
+            pframe.reshape(*pframe.shape, 1),
+            axis=0)).argmax()
         text = "Prediction: " + str(label)
         cv2.putText(frame, text, (50, 50),
                 fontFace=cv2.FONT_HERSHEY_PLAIN,
