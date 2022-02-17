@@ -15,17 +15,18 @@ def _main():
     #src = cv2.VideoCapture('http://192.168.1.139:8080/video')
     win_name = 'preview'
     cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    #fgbg = cv2.bgsegm.createBackgroundSubtractorGMG()
-    fgbg = cv2.createBackgroundSubtractorMOG2()
     while cv2.waitKey(1) != 27:
         has_frame, frame = src.read()
         if not has_frame:
             break
 
-        pframe = fgbg.apply(frame)
+        pframe = frame
         pframe = cv2.resize(pframe, (128, 128))
+        pframe = cv2.cvtColor(pframe, cv2.COLOR_BGR2GRAY)
+        pframe = cv2.adaptiveThreshold(pframe, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 7)
         cv2.imshow(win_name, pframe)
+
+        #pframe = process_frame(frame)
         #label = model.predict(np.expand_dims(
         #    pframe.reshape(*pframe.shape, 1),
         #    axis=0)).argmax()
