@@ -2,3 +2,4 @@
 *.jpg
 *.npz
 .ipynb_checkpoints
+centernet*
