@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import uuid
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -34,7 +35,8 @@ def _main():
     win_name = 'preview'
     cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
 
-    model = keras.models.load_model('bgmodel')
+    #model = keras.models.load_model('bgmodel')
+    model = keras.models.load_model('manualmodel')
 
     default_text_params = {
             'fontFace': cv2.FONT_HERSHEY_PLAIN,
@@ -52,6 +54,7 @@ def _main():
     while True:
         nframe += 1
         key = cv2.waitKey(1)
+        print(key)
         if key == 27:
             break
         if nframe == 1 or key == 32:
@@ -66,6 +69,7 @@ def _main():
             break
         if elapsed < 1. / frame_rate:
             continue
+
         fps = int(1.0 / elapsed)
         s_time = c_time
         
@@ -75,6 +79,9 @@ def _main():
         
         frame = cv2.resize(frame, (width, height))
         frame = preprocess_frame(frame, bgframes)
+    
+        if key == 13:
+            cv2.imwrite(os.path.join('manual', uuid.uuid4().hex + '.png'), frame)
         
         ypred = model.predict(np.expand_dims(frame, axis=0))[0]
         label = ypred.argmax()
