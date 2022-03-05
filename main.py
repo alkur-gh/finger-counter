@@ -8,23 +8,19 @@ import cv2
 from tensorflow import keras
 
 
-def attach_text(image, text):
-    cv2.putText(image, text, (20, 20),
-            fontFace=cv2.FONT_HERSHEY_PLAIN,
-            fontScale=1,
-            color=(255, 0, 0),
-            thickness=1,
-            lineType=cv2.LINE_AA,
-    )
+#def preprocess_frame(frame, bgframes):
+#    bgsub = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
+#    for bgframe in bgframes:
+#        bgsub.apply(bgframe)
+#    mask = bgsub.apply(frame)
+#    return np.expand_dims(mask, axis=2)
 
 
-def preprocess_frame(frame, bgframes):
-    bgsub = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
-    for bgframe in bgframes:
-        bgsub.apply(bgframe)
-    mask = bgsub.apply(frame)
-    #return np.expand_dims(cv2.cvtColor(cv2.bitwise_and(frame, frame, mask=mask), cv2.COLOR_BGR2GRAY), axis=2)
-    return np.expand_dims(mask, axis=2)
+def preprocess_frame(frame, bgavg, threshold):
+    diff = cv2.absdiff(bgavg.astype("uint8"), frame)
+    thresholded = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)[1]
+    #thresholded = cv2.adaptiveThreshold(diff, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,5)
+    return thresholded
 
 
 def _main():
@@ -46,22 +42,14 @@ def _main():
             'lineType': cv2.LINE_AA,
     }
    
-    frame_rate = 7
-    bgframes = []
+    frame_rate = 5
     s_time = time.time()
     key = None
     nframe = 0
-    while True:
-        nframe += 1
-        key = cv2.waitKey(1)
-        print(key)
-        if key == 27:
-            break
-        if nframe == 1 or key == 32:
-            bgframes = []
-            for _ in range(30):
-                bgframes.append(cv2.resize(src.read()[1], (width, height)))
+    bgavg = None
+    threshold = 25
 
+    while True:
         c_time = time.time()
         elapsed = c_time - s_time
         has_frame, frame = src.read()
@@ -70,24 +58,47 @@ def _main():
         if elapsed < 1. / frame_rate:
             continue
 
+        nframe += 1
+
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+        elif key == 32:
+            nframe = 0
+            continue
+        elif key == 84:
+            threshold = max(0, threshold - 1)
+        elif key == 82:
+            threshold = min(100, threshold + 1)
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv2.resize(frame, (width, height))
+
+        if nframe < 30:
+            if bgavg is None:
+                bgavg = frame.astype(np.float64)
+            else:
+                cv2.accumulateWeighted(frame, bgavg, 0.2)
+            continue
+
         fps = int(1.0 / elapsed)
         s_time = c_time
         
         strings = []
 
         strings.append(f'FPS: {fps}')
-        
-        frame = cv2.resize(frame, (width, height))
-        frame = preprocess_frame(frame, bgframes)
-    
+
+        strings.append(f'{threshold}')
+
+        frame = preprocess_frame(frame, bgavg, threshold)
+
         if key == 13:
             cv2.imwrite(os.path.join('manual', uuid.uuid4().hex + '.png'), frame)
         
-        ypred = model.predict(np.expand_dims(frame, axis=0))[0]
+        ypred = model.predict(np.expand_dims(np.expand_dims(frame, axis=0), axis=3))[0]
         label = ypred.argmax()
         conf = np.exp(ypred[label])/np.exp(ypred).sum()
         print(np.exp(ypred)/np.exp(ypred).sum())
-
         strings.append(f'{ypred.argmax()} {conf:.2}')
 
         cv2.putText(frame, ' | '.join(strings), (10, 10), **default_text_params)
