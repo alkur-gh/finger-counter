@@ -32,7 +32,7 @@ def _main():
     cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
 
     #model = keras.models.load_model('bgmodel')
-    model = keras.models.load_model('manualmodel')
+    model = keras.models.load_model('manualmodel70')
 
     default_text_params = {
             'fontFace': cv2.FONT_HERSHEY_PLAIN,
@@ -65,6 +65,7 @@ def _main():
             break
         elif key == 32:
             nframe = 0
+            bgavg = None
             continue
         elif key == 84:
             threshold = max(0, threshold - 1)
