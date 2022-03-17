@@ -1,0 +1,27 @@
+abstract
+The problem of the project is a real-time finger counter. A deep learning model
+was used for input images classification into 6 classes - number of open fingers.
+Input data is grayscale images of 128 by 128 pixels. All data was manually
+collected and labelled. To classify images hand must be on solid color background.
+In real-time testing environment some frames are necessary to average background
+which subsequently used for image background subtraction. To build the model
+Keras API with Tensorflow backend was used. Current model is convolutional
+neural network with the following layers:
+    1. Conv: 64 filters, 3 kernel size, 1 stride
+    2. Max pooling: 3 kernel size, 1 stride
+    3. Conv: 64 filters, 3 kernel size, 1 stride
+    4. Max pooling: 3 kernel size, 1 stride
+    5. Flattening layer
+    6. Dense layer: 256 neurons, ReLU activation
+    7. Dense layer: 256 neurons, ReLU activation
+    8. Dense layer: 6 neurons, Softmax activation
+For training adam optimizer was used with sparse categorical crossentropy as
+loss function.
+During training images were augmented using following transformations:
+    - 30 degrees rotation
+    - horizontal flips
+    - zoom of 0.2 scale
+    - vertical and horizontal shifts by 10 pixels
+Current results:
+    - 98 collected images classified into 6 classes
+    - Validation metrics after 50 epochs are 0.8192 loss and 0.6939 accuracy

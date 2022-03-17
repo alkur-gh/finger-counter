@@ -8,14 +8,6 @@ import cv2
 from tensorflow import keras
 
 
-#def preprocess_frame(frame, bgframes):
-#    bgsub = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
-#    for bgframe in bgframes:
-#        bgsub.apply(bgframe)
-#    mask = bgsub.apply(frame)
-#    return np.expand_dims(mask, axis=2)
-
-
 def preprocess_frame(frame, bgavg, threshold):
     diff = cv2.absdiff(bgavg.astype("uint8"), frame)
     thresholded = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)[1]
@@ -32,7 +24,7 @@ def _main():
     cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
 
     #model = keras.models.load_model('bgmodel')
-    model = keras.models.load_model('manualmodel70')
+    model = keras.models.load_model('manualmodel85')
 
     default_text_params = {
             'fontFace': cv2.FONT_HERSHEY_PLAIN,
@@ -99,7 +91,7 @@ def _main():
         ypred = model.predict(np.expand_dims(np.expand_dims(frame, axis=0), axis=3))[0]
         label = ypred.argmax()
         conf = np.exp(ypred[label])/np.exp(ypred).sum()
-        print(np.exp(ypred)/np.exp(ypred).sum())
+        #print(np.exp(ypred)/np.exp(ypred).sum())
         strings.append(f'{ypred.argmax()} {conf:.2}')
 
         cv2.putText(frame, ' | '.join(strings), (10, 10), **default_text_params)
